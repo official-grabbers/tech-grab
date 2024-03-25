@@ -1,29 +1,113 @@
-const express = require('express')
-const app = express()
-const runWappalyzer = require("./src/cli")
+const express = require("express");
+const multer = require("multer");
+const { v4: uuidv4 } = require("uuid");
+const runWappalyzer = require("./src/cli");
+const { exec } = require("child_process");
 
-const port = 80
-const hostname = '0.0.0.0';
+const app = express();
+const processingQueue = {};
 
-app.use(express.json())
+// Multer storage configuration
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, "uploads/");
+    },
+    filename: function (req, file, cb) {
+        const fileId = uuidv4(); // Generate unique ID for the file
+        cb(null, `${fileId}.csv`);
+    },
+});
+
+const upload = multer({ storage: storage }).single("file");
+// const processingQueue = new Bull('processing-queue');
+
+app.post("/upload", async (req, res) => {
+    upload(req, res, function (err) {
+        if (err) {
+            console.error(err);
+            return res.status(500).send("Error uploading file");
+        }
+
+        if (!req.file) {
+            return res.status(400).send("No file provided");
+        }
+        // Retrieve file name and file path
+        const fileName = req.file.filename;
+        const filePath = req.file.path;
+
+        // Start background process
+        const processId = startBackgroundProcess(fileName, filePath);
+
+        // Store process ID for tracking progress
+        processingQueue[fileName] = { progress: 0 };
+
+        res.json({
+            message: "CSV uploaded successfully!",
+            fileName,
+            filePath,
+            processId,
+        });
+    });
+});
+
+// Start background process
+function startBackgroundProcess(fileName, filePath) {
+    const processId = uuidv4(); // Generate unique ID for the process
+    const process = exec(`node process-csv.js ${fileName} ${filePath}`);
+
+    // Set maximum listeners to prevent EventEmitter memory leaks
+    process.setMaxListeners(20);
+
+    process.stdout.on("data", (data) => {
+        console.log(`stdout: ${data}`);
+        // Update progress
+        if (data.includes("Progress:")) {
+            const progress = parseInt(data.split(":")[1]);
+            if (processingQueue[fileName]) {
+                processingQueue[fileName].progress = progress;
+            }
+        }
+    });
+
+    process.stderr.on("data", (data) => {
+        console.error(`stderr: ${data}`);
+    });
+
+    process.on("close", (code) => {
+        console.log(`child process exited with code ${code}`);
+        delete processingQueue[fileName]; // Remove from processing queue on completion
+    });
+
+    return processId;
+}
+
+// Route to check progress
+app.get("/progress/:fileName", (req, res) => {
+    const fileName = req.params.fileName;
+    const progress = processingQueue[fileName]
+        ? processingQueue[fileName].progress
+        : -1;
+    res.json({ fileName, progress });
+});
+
+app.get("/", (req, res) => {
+    res.send("Hello World");
+});
 
 // Define a basic GET request handler
-app.get('/', (req, res) => {
-  res.send('Hello World')
-})
+app.get("/check", (req, res) => {
+    const websiteURL = req.query.url; // Assuming you're passing the website URL as a query parameter
+    runWappalyzer(websiteURL)
+        .then((results) => {
+            res.send(JSON.stringify(results));
+        })
+        .catch((error) => {
+            res.send(error.message || String(error));
+        });
+});
 
-// Define a basic GET request handler
-app.get('/check', (req, res) => {
-  const websiteURL = req.query.url // Assuming you're passing the website URL as a query parameter
-  runWappalyzer(websiteURL)
-    .then((results) => {
-      res.send(JSON.stringify(results))
-    })
-    .catch((error) => {
-      res.send(error.message || String(error))
-    })
-})
+const port = 80;
 
-app.listen(port, hostname, () => {
-    console.log(`Server running at http://${hostname}:${port}/`);
+app.listen(port, () => {
+    console.log(`Server running at ${port}`);
 });

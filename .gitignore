@@ -7,6 +7,8 @@
 /src/drivers/webextension/manifest.bak.json
 
 node_modules
+uploads/
+results/
 package-lock.json
 
 !.gitkeep

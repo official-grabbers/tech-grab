@@ -373,18 +373,9 @@ class Driver {
 
     try {
       if (CHROMIUM_WEBSOCKET) {
-        this.browser = await puppeteer.connect({
-          ignoreHTTPSErrors: true,
-          acceptInsecureCerts: true,
-          browserWSEndpoint: CHROMIUM_WEBSOCKET,
-        })
+        this.browser = await puppeteer.connect()
       } else {
-        this.browser = await puppeteer.launch({
-          ignoreHTTPSErrors: true,
-          acceptInsecureCerts: true,
-          args: chromiumArgs,
-          executablePath: CHROMIUM_BIN,
-        })
+        this.browser = await puppeteer.launch()
       }
 
       this.browser.on('disconnected', async () => {
