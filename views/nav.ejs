@@ -1,0 +1,41 @@
+<ul
+class="flex-column w-80 p-5 space-y space-y-4 text-sm font-medium text-gray-500 dark:text-gray-400 md:me-4 mb-4 md:mb-0">
+<li>
+    <a href="/"
+        class="inline-flex items-center px-4 py-3 rounded-lg hover:text-gray-900 bg-gray-50 hover:bg-gray-100 w-full dark:bg-gray-800 dark:hover:bg-gray-700 dark:hover:text-white"
+        aria-current="page">
+        @Home
+    </a>
+</li>
+<li>
+    <a href="/tech-stack"
+        class="inline-flex items-center px-4 py-3 rounded-lg hover:text-gray-900 bg-gray-50 hover:bg-gray-100 w-full dark:bg-gray-800 dark:hover:bg-gray-700 dark:hover:text-white">
+        @Tech Stack
+    </a>
+</li>
+<li>
+    <a href="/bulk-stack"
+        class="inline-flex items-center px-4 py-3 rounded-lg hover:text-gray-900 bg-gray-50 hover:bg-gray-100 w-full dark:bg-gray-800 dark:hover:bg-gray-700 dark:hover:text-white">
+        @Bulk Stack
+    </a>
+</li>
+<li>
+    <a href="/contact-us"
+        class="inline-flex items-center px-4 py-3 rounded-lg hover:text-gray-900 bg-gray-50 hover:bg-gray-100 w-full dark:bg-gray-800 dark:hover:bg-gray-700 dark:hover:text-white">
+        @Contact Us
+    </a>
+</li>
+<li>
+    <a
+        class="inline-flex items-center px-4 py-3 text-gray-400 rounded-lg cursor-not-allowed bg-gray-50 w-full dark:bg-gray-800 dark:text-gray-500">
+        @Official Grabbers</a>
+</li>
+</ul>
+<script>
+    document.querySelectorAll('ul > li > a').forEach(link => {
+        if (link.getAttribute('href') === window.location.pathname) {
+            link.classList.remove('hover:text-gray-900', 'bg-gray-50', 'hover:bg-gray-100', 'w-full', 'dark:bg-gray-800', 'dark:hover:bg-gray-700', 'dark:hover:text-white');
+            link.classList.add('text-white', 'bg-blue-700', 'active', 'w-full', 'dark:bg-blue-600');
+        }
+    });
+</script>

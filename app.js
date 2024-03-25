@@ -3,9 +3,13 @@ const multer = require("multer");
 const { v4: uuidv4 } = require("uuid");
 const runWappalyzer = require("./src/cli");
 const { exec } = require("child_process");
+const bodyParser = require("body-parser");
 
 const app = express();
 const processingQueue = {};
+// Set EJS as the view engine
+app.set("view engine", "ejs");
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // Multer storage configuration
 const storage = multer.diskStorage({
@@ -90,20 +94,38 @@ app.get("/progress/:fileName", (req, res) => {
     res.json({ fileName, progress });
 });
 
+// Define a route to render the EJS template
 app.get("/", (req, res) => {
-    res.send("Hello World");
+    res.render("index");
 });
 
 // Define a basic GET request handler
-app.get("/check", (req, res) => {
-    const websiteURL = req.query.url; // Assuming you're passing the website URL as a query parameter
-    runWappalyzer(websiteURL)
-        .then((results) => {
-            res.send(JSON.stringify(results));
-        })
-        .catch((error) => {
-            res.send(error.message || String(error));
-        });
+app.get("/tech-stack", (req, res) => {
+    res.render("example");
+});
+
+app.get("/bulk-stack", (req, res) => {
+    res.render("upload");
+});
+
+app.get("/contact-us", (req, res) => {
+  res.render("contact");
+});
+
+app.post("/tech-stack", async (req, res) => {
+    try {
+        const website_url = req.body.website;
+        const technologies = await runWappalyzer(website_url);
+
+        const results = {
+            url: website_url,
+            technologies: technologies,
+        };
+
+        res.render("example", { results });
+    } catch (error) {
+        res.render("example", { error: error.message || String(error) });
+    }
 });
 
 const port = 80;
