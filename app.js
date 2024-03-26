@@ -4,6 +4,7 @@ const { v4: uuidv4 } = require("uuid");
 const runWappalyzer = require("./src/cli");
 const { exec } = require("child_process");
 const bodyParser = require("body-parser");
+const redis = require("redis");
 
 const app = express();
 const processingQueue = {};
@@ -11,6 +12,7 @@ const processingQueue = {};
 app.set("view engine", "ejs");
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({ extended: true }));
+const client = redis.createClient();
 
 // Multer storage configuration
 const storage = multer.diskStorage({
@@ -113,20 +115,59 @@ app.get("/contact-us", (req, res) => {
   res.render("contact");
 });
 
+function generateUniqueId() {
+    return Math.random().toString(36).substring(2, 10);
+}
+
 app.post("/tech-stack", async (req, res) => {
     try {
         const website_url = req.body.website;
-        const technologies = await runWappalyzer(website_url);
+        const jobId = generateUniqueId();
+
+        client.set(jobId, "processing");
+
+        runWappalyzer(website_url).then(results => {
+            client.set(jobId, JSON.stringify(results));
+        });
 
         const results = {
             url: website_url,
             technologies: technologies,
         };
 
-        res.render("example", { results });
+        res.render("example", { jobId });
     } catch (error) {
         res.render("example", { error: error.message || String(error) });
     }
+});
+
+app.get("/progress/:jobId", (req, res) => {
+    const { jobId } = req.params;
+
+    client.get(jobId, (err, result) => {
+        if (err) {
+            res.status(500).send({ error: "Internal server error" });
+        } else if (!result) {
+            res.status(404).send({ error: "Job not found" });
+        } else if (result === "processing") {
+            res.send({ progress: 0 });
+        } else {
+            res.send({ progress: 100 });
+        }
+    });
+});
+
+app.get("/results/:jobId", (req, res) => {
+    const { jobId } = req.params;
+    client.get(jobId, (err, result) => {
+        if (err) {
+            res.status(500).send({ error: "Internal server error" });
+        } else if (!result) {
+            res.status(404).send({ error: "Job not found" });
+        } else {
+            res.send(JSON.parse(result));
+        }
+    });
 });
 
 const port = 8888;
