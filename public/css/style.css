@@ -1,0 +1,11 @@
+.w-1200 {
+    width: 1200px;
+    max-width: 1200px !important;
+}
+
+/* For screens larger than lg (1024px) */
+@media (min-width: 1024px) {
+    .lg\:w-1200 {
+      width: 1200px;
+    }
+}

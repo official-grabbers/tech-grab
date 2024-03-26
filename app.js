@@ -9,6 +9,7 @@ const app = express();
 const processingQueue = {};
 // Set EJS as the view engine
 app.set("view engine", "ejs");
+app.use(express.static("public"));
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Multer storage configuration
@@ -128,7 +129,7 @@ app.post("/tech-stack", async (req, res) => {
     }
 });
 
-const port = 80;
+const port = 8888;
 
 app.listen(port, () => {
     console.log(`Server running at ${port}`);

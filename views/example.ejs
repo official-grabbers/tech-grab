@@ -10,6 +10,7 @@
         Technologies | Grabbers
     </title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="./css/style.css">
 </head>
 
 <body>
@@ -18,20 +19,21 @@
         <div class="md:flex">
             <%- include('nav') %>
                 <div
-                    class="w-full p-6 bg-gray-50 text-medium text-gray-500 dark:text-gray-400 dark:bg-gray-800 grid justify-center items-center rounded-lg w-full">
+                    class="w-full p-6 bg-gray-50 text-medium text-gray-500 dark:text-gray-400 dark:bg-gray-800 grid justify-center items-center rounded-lg">
                     <h1
                         class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-5xl dark:text-white">
                         Let's Grab <span id="heading" class="text-blue-600 dark:text-blue-500">
                             <%= typeof results !== 'undefined' && results.url ? (extractDomain(results.url)[0].toUpperCase() + extractDomain(results.url).slice(1)) : 'Example.com' %>
                         </span>
                     </h1>
-                    <hr class="h-px bg-gray-400 border-0 rounded dark:bg-gray-700">
+                    <hr class="h-px bg-gray-400 border-0 rounded dark:bg-gray-700 w-1200">
                     <% if (typeof error !== 'undefined') { %>
                         <p class="text-red-600">
                             <span class="font-bold">ERROR: </span>
                             <%= error %>
                         </p>
                     <% } %>
+                    <div id="progress-bar" style="width: 0%; background-color: #00FF00;"></div>
                     <% if (typeof results !== 'undefined') { %>
                         <div class="results">
                             <% results.technologies.technologies.forEach(tech => { %>
@@ -52,6 +54,18 @@
         </div>
     </main>
     <script>
+
+        const source = new EventSource('/tech-stack-events');
+        source.onmessage = function(event) {
+            const data = event.data;
+            if (data === 'complete') {
+                document.getElementById('progress-bar').style.width = '100%';
+                document.getElementById('progress-bar').innerHTML = 'Processing complete!';
+            } else {
+                document.getElementById('progress-bar').style.width = data + '%';
+                document.getElementById('progress-bar').innerHTML = 'Processing: ' + data + '%';
+            }
+        };
 
         document.getElementById('inline-form').addEventListener('submit', (event) => event.target.querySelector('button[type="submit"]').setAttribute('disabled', 'disabled'));
 
