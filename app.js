@@ -11,6 +11,7 @@ const processingQueue = {};
 app.set("view engine", "ejs");
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({ extended: true }));
+const jobCache = {};
 
 // Multer storage configuration
 const storage = multer.diskStorage({
@@ -113,20 +114,32 @@ app.get("/contact-us", (req, res) => {
   res.render("contact");
 });
 
-app.post("/tech-stack", async (req, res) => {
+app.post("/tech-stack", (req, res) => {
     try {
         const website_url = req.body.website;
-        const technologies = await runWappalyzer(website_url);
+        const jobId = uuidv4();
 
-        const results = {
+        jobCache[jobId] = "processing";
+
+        const results = runWappalyzer(website_url);
+        jobCache[jobId] = {
             url: website_url,
-            technologies: technologies,
-        };
+            technologies: results
+        }
 
-        res.render("example", { results });
+        res.redirect(`/tech-stack/${jobId}`);
     } catch (error) {
         res.render("example", { error: error.message || String(error) });
     }
+});
+
+app.get("/tech-stack/:jobId", async (req, res) => {
+    const { jobId } = req.params;
+    const data = await jobCache[jobId];
+    if (!data) {
+        return res.status(404).send('Job not found');
+    }
+    res.render('example', { data });
 });
 
 const port = 8888;
