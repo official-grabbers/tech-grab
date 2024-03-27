@@ -11,6 +11,7 @@
     </title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="./css/style.css">
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO" crossorigin="anonymous"></script>
 </head>
 
 <body>
@@ -34,15 +35,47 @@
                             <%= error %>
                         </p>
                     <% } %>
-                    <form action="/upload" enctype="multipart/form-data" method="POST" id="inline-form"> 
-                        <input class="mr-10 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5  me-2 mb-2  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
-                        accept=".csv" pattern="^.+\.(xlsx|xls|csv)$" name="file"
-                        aria-describedby="file_input_help" id="file_input" type="file">
-                    </form>
+                    <% if (data && data.fileName) { %>
+                        <div id="end">
+                            <div id="upload-log">Uploading File</div>
+                            <div class="hidden" id="progress-log">Processing File</div>
+                            <a href="#" class="hidden text-blue-600 underline" id="download-link" download>Click Me to Download File</a>
+                        </div>
+                     <% } else { %>
+                        <form action="/bulk-stack" enctype="multipart/form-data" method="POST" id="inline-form"> 
+                            <input class="mr-10 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5  me-2 mb-2  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+                            accept=".csv" pattern="^.+\.(xlsx|xls|csv)$" name="file"
+                            aria-describedby="file_input_help" id="file_input" type="file">
+                        </form>
+                    <% } %>
                 </div>
         </div>
     </main>
     <script>
+        window.onload = function() {
+            setTimeout(()=>{
+                document.getElementById('progress-log').classList.remove("hidden");
+                document.getElementById('upload-log').classList.add("hidden");
+            },10000)
+          };
+
+        const socket = io();
+
+        socket.on('connect', () => {
+            console.log('Connected to server');
+            socket.emit('register', { fileName: '<%= data.fileName %>' }); // Register the socket with the server
+        });
+
+        socket.on('progress', (data) => {
+            document.getElementById('progress-log').innerText = `Progress: ${data.progress}%`;
+        });
+
+        socket.on('processingComplete', (data) => {
+            document.getElementById('progress-log').innerText = 'Processing Completed';
+            document.getElementById('download-link').classList.remove("hidden");
+            const downloadLink = document.getElementById('download-link');
+            downloadLink.setAttribute('href', `/results/results-${data?.fileName}.csv`);
+        });
         document.getElementById('file_input').addEventListener('change', function() {
             document.getElementById('inline-form').submit();
         });
