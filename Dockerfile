@@ -28,7 +28,7 @@ RUN cd /usr/src/app/src && npm install
 
 
 # Expose the port on which the Node.js application will run
-EXPOSE 80
+EXPOSE 8888
 
 # Command to run the Node.js application
 # CMD ["pm2-runtime", "app.js"]
