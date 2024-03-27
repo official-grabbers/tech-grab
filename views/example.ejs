@@ -53,19 +53,6 @@
         </div>
     </main>
     <script>
-
-        const source = new EventSource('/tech-stack-events');
-        source.onmessage = function(event) {
-            const data = event.data;
-            if (data === 'complete') {
-                document.getElementById('progress-bar').style.width = '100%';
-                document.getElementById('progress-bar').innerHTML = 'Processing complete!';
-            } else {
-                document.getElementById('progress-bar').style.width = data + '%';
-                document.getElementById('progress-bar').innerHTML = 'Processing: ' + data + '%';
-            }
-        };
-
         document.getElementById('inline-form').addEventListener('submit', (event) => event.target.querySelector('button[type="submit"]').setAttribute('disabled', 'disabled'));
 
         // Select the input element

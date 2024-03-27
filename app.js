@@ -114,32 +114,20 @@ app.get("/contact-us", (req, res) => {
   res.render("contact");
 });
 
-app.post("/tech-stack", (req, res) => {
+app.post("/tech-stack", async (req, res) => {
     try {
         const website_url = req.body.website;
-        const jobId = uuidv4();
+        const technologies = await runWappalyzer(website_url);
 
-        jobCache[jobId] = "processing";
-
-        const results = runWappalyzer(website_url);
-        jobCache[jobId] = {
+        const results = {
             url: website_url,
-            technologies: results
-        }
+            technologies: technologies,
+        };
 
-        res.redirect(`/tech-stack/${jobId}`);
+        res.render("example", { results });
     } catch (error) {
         res.render("example", { error: error.message || String(error) });
     }
-});
-
-app.get("/tech-stack/:jobId", async (req, res) => {
-    const { jobId } = req.params;
-    const data = await jobCache[jobId];
-    if (!data) {
-        return res.status(404).send('Job not found');
-    }
-    res.render('example', { data });
 });
 
 const port = 8888;
