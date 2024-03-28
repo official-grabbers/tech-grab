@@ -4,6 +4,6 @@ services:
   nodejs:
     build: .
     ports:
-      - "80:80"
+      - "8888:8888"
     volumes:
       - .:/usr/src/app

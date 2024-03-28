@@ -375,7 +375,10 @@ class Driver {
       if (CHROMIUM_WEBSOCKET) {
         this.browser = await puppeteer.connect()
       } else {
-        this.browser = await puppeteer.launch()
+        this.browser = await puppeteer.launch({
+          headless: true,
+          args: ['--no-sandbox']
+       })
       }
 
       this.browser.on('disconnected', async () => {

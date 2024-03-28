@@ -31,7 +31,7 @@ RUN cd /usr/src/app/src && npm install
 EXPOSE 8888
 
 # Command to run the Node.js application
-# CMD ["pm2-runtime", "app.js"]
+CMD ["pm2-runtime", "app.js"]
 # CMD ["node", "app.js"]
-CMD ["npx", "nodemon", "app.js"]
+# CMD ["npx", "nodemon", "app.js"]
 
