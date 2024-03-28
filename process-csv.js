@@ -10,10 +10,16 @@ function processCSV(fileName, filePath) {
     const processedData = [];
 
     return new Promise((resolve, reject) => {
-        fs.createReadStream(filePath)
-            .pipe(csvParser())
+        let headerFound = false;
+        fs.createReadStream(filePath, { encoding: 'utf-8' })
+            .pipe(csvParser({ headers: ['Domains'] }))
             .on("data", async (row) => {
-                const websiteURL = "https://" + row["Domain"];
+                let websiteURL = row.Domains.trim();
+
+                if (!websiteURL.startsWith("http://") && !websiteURL.startsWith("https://")) {
+                    websiteURL = "https://" + websiteURL;
+                }
+    
                 totalRecords++;
                 try {
                     const response = await runWappalyzer(websiteURL);
@@ -25,21 +31,21 @@ function processCSV(fileName, filePath) {
                     );
                     console.log(`Progress: ${progress}%`);
 
-                    processedData.push({ original: row, processed: response });
+                    processedData.push(response);
 
-                    // Convert and append data to CSV (if processedData has content)
                     if (processedData.length > 0) {
-                        const csvData = processedData.map((item) => ({
-                            domain: item.original["Domain"], // Extract domain from original data
-                            technologies: item.processed.technologies
-                                ? item.processed.technologies
-                                      .map((tech) => tech.name)
-                                      .join(", ")
-                                : "", // Extract and join technology names (if any)
+                        const rowData = processedData.map((item) => ({
+                            Domains: websiteURL,
+                            Technologies: item.technologies.map((tech) => tech.name).join(", ")
                         }));
-                        const csv = json2csv.parse(csvData, { header: true });
+                        const csvContent = json2csv.parse(rowData, { header: true });
                         const resultsFilePath = `results/results-${fileName}.csv`;
-                        fs.appendFileSync(resultsFilePath, csv);
+
+                        if (!fs.existsSync(resultsFilePath)) {
+                            fs.writeFileSync(resultsFilePath, csvContent + '\n', 'utf-8');
+                        } else {
+                            fs.appendFileSync(resultsFilePath, csvContent.split('\n').slice(1).join('\n') + '\n', 'utf-8');
+                        }
                         processedData.length = 0; // Clear processedData for next record
                     }
                 } catch (error) {
